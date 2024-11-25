@@ -10,29 +10,32 @@ async function run(): Promise<void> {
         const expectedContent: string = core.getInput('expectedContent');
 
         console.log(`Polling url ${url} for ${attempts} attempts with a delay of ${interval}`);
-        console.log(`Awaiting specified content: ${expectedContent}`);
+        if (expectedContent) {
+            console.log(`Awaiting specified content: ${expectedContent}`);
+        }
 
         let currentAttempt = 1;
 
         while (currentAttempt <= attempts) {
-            let response;
             try {
-                response = await axios.get(url, { timeout: interval });
+                const response = await axios.get(url, { timeout: interval });
+
+                if (expectedContent) {
+                    if (String(response?.data) === expectedContent) {
+                        console.log('expected content found... proceeding');
+                        process.exit(0);
+                    }
+                } else if (response?.status === 200) {
+                    console.log('expected status code found... proceeding');
+                    process.exit(0);
+                }
+
+                console.log(
+                    `attempt ${currentAttempt} gave code: ${response?.status} with content: ${String(response?.data)}`,
+                );
             } catch (error) {
                 console.log(`attempt ${currentAttempt} threw error: ${error}`);
-                await wait(interval);
-                currentAttempt++;
-                continue; // skip rest of current iteration
             }
-
-            if (String(response?.data) === expectedContent) {
-                console.log('expected content found... proceeding');
-                process.exit(0);
-            }
-
-            console.log(
-                `attempt ${currentAttempt} gave code: ${response?.status} with content: ${String(response?.data)}`,
-            );
 
             await wait(interval);
             currentAttempt++;
