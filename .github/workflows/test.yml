@@ -21,4 +21,7 @@ jobs:
       - uses: actions/checkout@v2
       - uses: ./
         with:
-          milliseconds: 1000
+          url: https://github.com
+          attempts: 10
+          interval: 1000
+          
